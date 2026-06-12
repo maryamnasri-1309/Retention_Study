@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Persistence — Student Intake</title>
+<style>
+  :root{--ink:#1f2a44;--paper:#f6f4ef;--surface:#fff;--line:#dcd7cc;--muted:#6b6457;
+    --green:#4f8a3a;--green2:#6aa03f;--amber:#c98a14;--orange:#cc5b2e;--red:#b03636;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--serif:Georgia,"Times New Roman",serif;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 24px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:28px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  h1{font-family:var(--serif);font-weight:700;font-size:34px;line-height:1.1;margin:6px 0 4px}
+  .sub{color:var(--muted);font-size:14px;max-width:62ch}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start}
+  @media(max-width:840px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px}
+  .field{margin-bottom:16px}
+  label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+  input,select{width:100%;font-family:var(--sans);font-size:15px;color:var(--ink);padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  input:focus,select:focus{outline:2px solid var(--ink);outline-offset:1px;border-color:var(--ink)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .id-row{display:flex;gap:8px}.id-row input{flex:1}
+  .sect{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:6px 0 10px;border-top:1px solid var(--line);padding-top:14px}
+  button{font-family:var(--sans);font-weight:600;font-size:14px;cursor:pointer;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;padding:10px 16px}
+  button.ghost{background:#fff;color:var(--ink)}
+  button:hover{opacity:.92}button:active{transform:translateY(1px)}
+  .score-card{position:sticky;top:24px}
+  .score-num{font-family:var(--serif);font-size:64px;font-weight:700;line-height:1}
+  .score-of{font-size:18px;color:var(--muted)}
+  .tier-pill{display:inline-block;font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;margin-top:6px}
+  .gauge{height:12px;border-radius:6px;background:#eee;margin:18px 0 6px;overflow:hidden}
+  .gauge-fill{height:100%;border-radius:6px;width:0;transition:width .35s ease,background .35s ease}
+  .gauge-ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+  .note{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.45}
+  .check-list{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .check-opt{display:flex;align-items:center;gap:10px;padding:8px 11px;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}
+  .check-opt:last-child{border-bottom:0}.check-opt:hover{background:#faf8f3}
+  .check-opt input{width:auto;margin:0}.check-opt .rk{font-weight:700;color:var(--muted);width:18px}
+  .actions{display:flex;gap:8px;margin-top:18px}.actions button{flex:1}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{font-weight:600;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+  .table-card{margin-top:28px}
+  .table-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:8px}
+  h2{font-family:var(--serif);font-weight:700;font-size:21px;margin:0}
+  .empty{color:var(--muted);font-size:14px;padding:18px 0}
+  .mini{font-size:12px;padding:7px 13px}.big{font-size:14px;padding:11px 20px}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
+  .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">First-year engineering · persistence model</div>
+    <h1>Student intake</h1>
+    <p class="sub">Enter each student's survey responses; the persistence score updates live. When you're done, generate the cohort report — it opens the analysis page with everyone you've entered.</p>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <div class="field">
+        <label for="sid">Student ID (5-digit, no names)</label>
+        <div class="id-row"><input id="sid" inputmode="numeric" maxlength="5" placeholder="e.g. 48217"><button type="button" class="ghost" onclick="genId()">Generate</button></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="age">Age</label><input id="age" type="number" min="15" max="70" value="18"></div>
+        <div class="field"><label for="gpa">Final high school GPA (0-4.0)</label><input id="gpa" type="number" min="0" max="4" step="0.01" value="3.50"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label for="res">Residence</label><select id="res"><option>Dorm resident</option><option>Commuter</option></select></div>
+        <div class="field"><label for="hs">High school type</label><select id="hs"><option>Public</option><option>Private</option><option>Catholic</option><option>Boarding</option><option>Other</option></select></div>
+      </div>
+
+      <div class="sect">Scored academic placement</div>
+      <div class="row">
+        <div class="field"><label for="math">First-semester math course</label>
+          <select id="math"><option>Algebra</option><option>Pre-calculus</option><option selected>Calculus I</option><option>Calculus II</option><option>Linear Algebra/Differential Equations</option></select></div>
+        <div class="field"><label for="phys">First-semester physics</label>
+          <select id="phys"><option>Introduction to Physics</option><option>Physics I (Mechanics)</option><option>Physics II (Electronics)</option><option>Not registered</option></select></div>
+      </div>
+      <div class="field"><label for="eng">First-semester English course</label>
+        <select id="eng"><option>ESL or developmental English</option><option selected>ENG 101 - College Writing I</option><option>ENG 102 - College Writing II</option></select></div>
+      <div class="field"><label for="gened">Gen-ed group registered for (assigned)</label>
+        <select id="gened" onchange="live()">
+          <option>Quantitative / Natural Science</option><option>Communication (Written &amp; Oral)</option>
+          <option>Critical Thinking &amp; Info Literacy</option><option>Social Sciences &amp; DEI</option>
+          <option>Humanities &amp; Arts</option><option>World Languages &amp; Global/Historical</option>
+        </select></div>
+      <div class="field"><label>Gen-ed courses you're interested in <span class="muted" style="font-weight:400">(select all that apply)</span></label>
+        <div class="check-list" id="interestList"></div></div>
+
+      <div class="sect">For reporting only &mdash; no weight</div>
+      <div class="field"><label for="gender">Gender</label>
+        <select id="gender"><option>Male</option><option>Female</option><option>Nonbinary or other</option></select></div>
+      <div class="row">
+        <div class="field"><label for="dept">Department</label><select id="dept" onchange="fillPrograms()"></select></div>
+        <div class="field"><label for="prog">Program</label><select id="prog"></select></div>
+      </div>
+
+      <div class="actions">
+        <button type="button" onclick="addEntry()">Add to list</button>
+        <button type="button" class="ghost" onclick="resetForm()">Clear form</button>
+      </div>
+    </div>
+
+    <div class="card score-card">
+      <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600">Persistence score</div>
+      <div><span class="score-num" id="snum">&mdash;</span><span class="score-of"> / 100</span></div>
+      <div id="pill" class="tier-pill" style="background:#eee;color:var(--muted)">Enter data</div>
+      <div class="gauge"><div class="gauge-fill" id="gfill"></div></div>
+      <div class="gauge-ticks"><span>0</span><span>40</span><span>55</span><span>70</span><span>85</span><span>100</span></div>
+      <p class="note">Scored variables: GPA, math, physics, English, residence, high-school type, age, and registered gen-ed. Gender, department, program, and gen-ed interests are recorded for reporting only and don't affect the score. Race is not used.</p>
+    </div>
+  </div>
+
+  <div class="card table-card">
+    <div class="table-head">
+      <h2>Entries <span id="count" style="font-family:var(--sans);font-size:14px;color:var(--muted);font-weight:400"></span></h2>
+      <div><button type="button" class="big" onclick="generateReport()">Generate report &amp; analysis &rarr;</button></div>
+    </div>
+    <div style="margin:8px 0 0"><button type="button" class="ghost mini" onclick="downloadCSV()">Download CSV</button>
+      <button type="button" class="ghost mini" onclick="clearAll()">Clear all</button></div>
+    <div id="tableWrap"><p class="empty">No entries yet. Fill the form and choose &ldquo;Add to list.&rdquo;</p></div>
+  </div>
+</div>
+
+<script>
+const COEF={
+  math:{"Algebra":5,"Pre-calculus":10,"Calculus I":18,"Calculus II":22,"Linear Algebra/Differential Equations":25},
+  phys:{"Introduction to Physics":5,"Physics I (Mechanics)":10,"Physics II (Electronics)":12,"Not registered":0},
+  eng:{"ESL or developmental English":2,"ENG 101 - College Writing I":7,"ENG 102 - College Writing II":10},
+  res:{"Dorm resident":8,"Commuter":3},
+  hs:{"Boarding":6,"Private":5,"Catholic":5,"Public":4,"Other":3},
+  gened:{"Quantitative / Natural Science":7,"Communication (Written & Oral)":6,"Critical Thinking & Info Literacy":5,"Social Sciences & DEI":4,"Humanities & Arts":3,"World Languages & Global/Historical":2}};
+const GENED_ORDER=["Quantitative / Natural Science","Communication (Written & Oral)","Critical Thinking & Info Literacy","Social Sciences & DEI","Humanities & Arts","World Languages & Global/Historical"];
+const DEPTS={
+ "Anthropology":["Anthropology (B.A.)"],
+ "Art and Design":["Art and Design (B.A.)","Art and Design (B.F.A.)","Art Education PK-12 (B.F.A.)","Art History (B.A.)","Interior Design (B.F.A.)"],
+ "Biology":["Biology (B.A.)","Biology (B.S.)"],
+ "Business":["Business Administration (B.S.)"],
+ "Career, Technical and Science Education":["Business and Marketing Education (B.S.)","Career and Technical Education (B.S.)","Family and Consumer Sciences Education (B.S.)","Technology Education (B.S.)"],
+ "Chemistry":["Chemistry (B.S.)","Forensic Chemistry (B.S.)"],
+ "Communication":["Communication Studies (B.A.)","Journalism (B.A.)","Media Production (B.A.)","Public Relations and Advertising (B.A.)"],
+ "Computer Information Systems":["Computer Information Systems (B.S.)"],
+ "Criminal Justice":["Criminal Justice (B.S.)"],
+ "Dean's Office, Arts and Sciences":["Africana Studies (B.A.)","Arts and Letters (B.A.)","Television and Film Arts (B.A.)"],
+ "Economics and Finance":["Economics (B.A.)","Economics (B.S.)"],
+ "Elementary Education, Literacy and Educational Leadership":["Childhood Education 1-6 (B.S.)","Childhood Ed + English Extension (B.S.)","Childhood Ed + Mathematics Extension (B.S.)","Childhood Ed + Social Studies Extension (B.S.)","Early Childhood and Childhood Education (B.S.)","Early Childhood Education (B.S.)"],
+ "Engineering Technology":["Electrical Engineering Technology - Electronics (B.S.)","Electrical Engineering Technology - Smart Grid (B.S.)","Industrial Technology (B.S.)","Mechanical Engineering Technology (B.S.)"],
+ "English":["English (B.A.)","English Education 7-12 (B.S.)","Writing (B.A.)"],
+ "Exceptional Education":["Special Education and Childhood Education (B.S.)"],
+ "Fashion and Textile Technology":["Fashion and Textile Technology (B.S.)"],
+ "Geosciences":["Earth Sciences (B.S.)","Environmental Geography (B.S.)","Geography (B.A.)","Geology (B.S.)"],
+ "Health, Nutrition and Dietetics":["Dietetics (B.S.)","Health and Wellness (B.S.)","Nutrition and Dietetics (B.S.)"],
+ "History and Social Studies Education":["History (B.A.)","Social Studies Education 7-12 (B.S.)"],
+ "Hospitality and Tourism":["Hospitality Administration (B.S.)"],
+ "Mathematics":["Mathematics (B.A.)","Mathematics - Applied (B.S.)","Mathematics Education 7-12 (B.S.)"],
+ "Modern and Classical Languages":["Spanish (B.A.)"],
+ "Music":["Music (B.A.)","Music Education PK-12 (B.Mus.)"],
+ "Philosophy":["Philosophy (B.A.)"],
+ "Physics":["Physics (B.A.)","Physics (B.S.)"],
+ "Political Science, Public Administration and Planning":["International Relations (B.A.)","Political Science (B.A.)","Urban and Regional Planning (B.S.)"],
+ "Psychology":["Applied Psychology (B.A.)","Psychological Science (B.S.)"],
+ "Social Work":["Social Work (B.S.)"],
+ "Sociology":["Sociology (B.A.)"],
+ "Speech-Language Pathology":["Speech-Language Pathology (B.S.)"],
+ "Theater":["Theater (B.A.)"],
+ "University College (Individualized Studies)":["Individualized Studies (B.S.)"]
+};
+const BANDS=[{min:85,name:"Very strong",col:"#4f8a3a"},{min:70,name:"Strong",col:"#6aa03f"},{min:55,name:"Developing",col:"#c98a14"},{min:40,name:"At-risk",col:"#cc5b2e"},{min:0,name:"High support need",col:"#b03636"}];
+const COLS=["Student ID","Age","Gender","Residence","High school type","HS GPA","Math course","Physics 1st sem","English course","Gen-ed group","Gen-ed interested in","Department","Program","Persistence score","Tier"];
+const STORE="alinaction_g4_entries";
+let entries=[];
+const $=id=>document.getElementById(id);
+const tierFor=s=>BANDS.find(b=>s>=b.min);
+function ageBandPts(a){a=+a;if(a>=26)return 1;if(a>=23)return 2;if(a>=20)return 4;return 6;}
+
+// build interest checkboxes + department dropdown (ordered) + programs
+$("interestList").innerHTML=GENED_ORDER.map((g,i)=>`<label class="check-opt"><input type="checkbox" name="interest" value="${g}"><span class="rk">${i+1}</span><span>${g}</span></label>`).join("");
+function interestVals(){return [...document.querySelectorAll('input[name=interest]:checked')].map(c=>c.value);}
+$("dept").innerHTML='<option value="">— Select department —</option>'+Object.keys(DEPTS).map(d=>`<option>${d}</option>`).join("");
+function fillPrograms(){const d=$("dept").value;const progs=DEPTS[d]||[];
+  $("prog").innerHTML='<option value="">'+(d?"— Select program —":"— Select a department first —")+'</option>'+progs.map(p=>`<option>${p}</option>`).join("");}
+fillPrograms();
+
+function read(){return{sid:$("sid").value.trim(),age:+$("age").value,gender:$("gender").value,res:$("res").value,hs:$("hs").value,gpa:+$("gpa").value,math:$("math").value,phys:$("phys").value,eng:$("eng").value,gened:$("gened").value,interest:interestVals(),dept:$("dept").value,prog:$("prog").value};}
+function compute(d){let s=(Math.min(Math.max(d.gpa,0),4)/4*32)+COEF.math[d.math]+COEF.phys[d.phys]+COEF.eng[d.eng]+COEF.res[d.res]+COEF.hs[d.hs]+ageBandPts(d.age)+COEF.gened[d.gened];return Math.min(Math.round(s),100);}
+function live(){const d=read();if(isNaN(d.gpa))return;const s=compute(d),t=tierFor(s);
+  $("snum").textContent=s;$("gfill").style.width=s+"%";$("gfill").style.background=t.col;
+  const p=$("pill");p.textContent=t.name;p.style.background=t.col;p.style.color="#fff";}
+function genId(){$("sid").value=String(Math.floor(10000+Math.random()*90000));live();}
+function resetForm(){$("sid").value="";$("age").value=18;$("gpa").value="3.50";["gender","res","hs","phys","math","eng","gened","dept"].forEach(i=>$(i).selectedIndex=0);$("math").value="Calculus I";$("eng").value="ENG 101 - College Writing I";fillPrograms();document.querySelectorAll('input[name=interest]').forEach(c=>c.checked=false);live();}
+
+function save(){try{const o=entries.map(r=>{const x={};COLS.forEach((c,i)=>x[c]=r[i]);return x;});localStorage.setItem(STORE,JSON.stringify(o));}catch(e){}}
+function load(){try{const raw=localStorage.getItem(STORE);if(!raw)return;entries=JSON.parse(raw).map(o=>COLS.map(c=>o[c]!==undefined?o[c]:""));}catch(e){}}
+
+function addEntry(){const d=read();
+  if(!/^\d{5}$/.test(d.sid)){alert("Enter a 5-digit Student ID (or use Generate).");return;}
+  if(d.gpa<0||d.gpa>4||isNaN(d.gpa)){alert("GPA must be between 0 and 4.0.");return;}
+  const s=compute(d),t=tierFor(s);
+  entries.push([d.sid,d.age,d.gender,d.res,d.hs,d.gpa.toFixed(2),d.math,d.phys,d.eng,d.gened,d.interest.join("; "),d.dept,d.prog,s,t.name]);
+  save();renderTable();genId();}
+function renderTable(){
+  $("count").textContent=entries.length?`· ${entries.length} student${entries.length>1?"s":""}`:"";
+  if(!entries.length){$("tableWrap").innerHTML='<p class="empty">No entries yet. Fill the form and choose &ldquo;Add to list.&rdquo;</p>';return;}
+  let h='<table><thead><tr>'+["ID","Age","Math","English","Gen-ed","Dept","Score","Tier"].map(c=>`<th>${c}</th>`).join("")+'</tr></thead><tbody>';
+  entries.forEach(r=>{const c=tierFor(+r[13]).col;
+    h+=`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[6]}</td><td>${r[8]}</td><td>${r[9]}</td><td class="muted">${r[11]||"—"}</td><td><strong>${r[13]}</strong></td><td><span class="dot" style="background:${c}"></span>${r[14]}</td></tr>`;});
+  $("tableWrap").innerHTML=h+'</tbody></table>';}
+function clearAll(){if(entries.length&&confirm("Remove all entries? Export first if you need them.")){entries=[];save();renderTable();}}
+function downloadCSV(){if(!entries.length){alert("No entries to export yet.");return;}
+  const esc=v=>/[",\n]/.test(v)?'"'+String(v).replace(/"/g,'""')+'"':v;
+  const csv=[COLS.join(",")].concat(entries.map(r=>r.map(esc).join(","))).join("\n");
+  const b=new Blob([csv],{type:"text/csv"}),u=URL.createObjectURL(b);const a=document.createElement("a");
+  a.href=u;a.download="student_intake_"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);}
+function generateReport(){if(!entries.length){alert("Add at least one student first.");return;}save();window.location.href="report.html";}
+
+["sid","age","gpa","res","hs","math","phys","eng","gened"].forEach(i=>{$(i).addEventListener("input",live);$(i).addEventListener("change",live);});
+load();renderTable();live();
+</script>
+</body>
+</html>

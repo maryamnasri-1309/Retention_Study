@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Persistence — Cohort Report</title>
+<style>
+  :root{--ink:#1f2a44;--paper:#f6f4ef;--surface:#fff;--line:#dcd7cc;--muted:#6b6457;
+    --green:#4f8a3a;--amber:#c98a14;--orange:#cc5b2e;--red:#b03636;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--serif:Georgia,"Times New Roman",serif;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+  .wrap{max-width:980px;margin:0 auto;padding:32px 24px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  a.back{color:var(--ink);font-weight:600;font-size:13px;text-decoration:none;float:right}a.back:hover{text-decoration:underline}
+  h1{font-family:var(--serif);font-weight:700;font-size:32px;line-height:1.1;margin:6px 0 4px}
+  h2{font-family:var(--serif);font-weight:700;font-size:21px;margin:30px 0 6px}
+  .sub{color:var(--muted);font-size:14px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 6px}
+  button,label.filebtn{font-family:var(--sans);font-weight:600;font-size:14px;cursor:pointer;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;padding:9px 15px;display:inline-block}
+  button.ghost,label.filebtn{background:#fff;color:var(--ink)}button:hover,label.filebtn:hover{opacity:.92}
+  input[type=file]{display:none}.src{font-size:13px;color:var(--muted)}
+  .filterbar{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:8px}
+  .filterbar h3{margin:0 0 10px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+  .fgrid label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px;font-weight:600}
+  .fgrid select{width:100%;font-family:var(--sans);font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:#fff}
+  .fmeta{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:13px;color:var(--muted)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:8px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .stat .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .stat .v{font-family:var(--serif);font-size:34px;font-weight:700;line-height:1.1;margin-top:4px}
+  .stat .x{font-size:12px;color:var(--muted)}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;margin-top:12px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+  .legend span{display:inline-flex;align-items:center;gap:5px}.sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+  select{font-family:var(--sans);font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .note{font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:8px}
+  .bar-row{display:grid;grid-template-columns:200px 1fr 80px;gap:10px;align-items:center;margin:6px 0;font-size:13px}
+  .bar-track{background:#eee;border-radius:5px;height:20px;overflow:hidden}.bar-fill{height:100%;border-radius:5px}
+  .muted{color:var(--muted)}
+  @media print{.controls,.no-print,.filterbar .no-print{display:none!important}body{background:#fff}.panel,.stat{break-inside:avoid;border-color:#ccc}.wrap{max-width:100%;padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back no-print" href="index.html">&larr; Back to intake</a>
+    <div class="eyebrow">First-year engineering · persistence model</div>
+    <h1>Cohort analysis report</h1>
+    <p class="sub" id="asof">Loading data entered on the intake page&hellip;</p>
+  </header>
+
+  <div class="controls">
+    <button class="ghost" onclick="fromStore()">Reload from intake data</button>
+    <label class="filebtn">Load a CSV instead<input type="file" id="file" accept=".csv"></label>
+    <button class="ghost" onclick="loadSample()">Load sample data</button>
+    <button class="ghost no-print" onclick="window.print()">Print / Save as PDF</button>
+    <button class="ghost no-print" onclick="downloadSummary()">Download summary CSV</button>
+    <span class="src" id="src"></span>
+  </div>
+
+  <div id="report" style="display:none">
+    <div class="filterbar no-print">
+      <h3>Filter the report — combine any variables</h3>
+      <div class="fgrid" id="filters"></div>
+      <div class="fmeta"><span id="showing"></span><button class="ghost" style="padding:6px 12px;font-size:13px" onclick="resetFilters()">Reset filters</button></div>
+    </div>
+
+    <div class="cards" id="cards"></div>
+    <h2>Persistence tiers</h2>
+    <div class="panel"><div id="tierBars"></div><div class="legend" id="tierLegend"></div></div>
+    <h2>Score distribution</h2>
+    <div class="panel"><div id="hist"></div><p class="note">Tier cutoffs: 40 (at-risk), 55 (developing), 70 (strong), 85 (very strong).</p></div>
+    <h2>Projected outcomes</h2>
+    <div class="panel"><div id="outcomeBars"></div>
+      <p class="note">Expected counts, applying each tier's outcome distribution to its students. Projections from placeholder rates until calibrated against observed data.</p></div>
+    <h2>Average score by background factor</h2>
+    <div class="panel">
+      <div style="margin-bottom:10px" class="no-print">Break down by:
+        <select id="factor" onchange="renderFactor()">
+          <option value="Department">Department</option><option value="Program">Program</option>
+          <option value="Residence">Residence</option><option value="High school type">High school type</option>
+          <option value="Math course">Math course</option><option value="Physics 1st sem">Physics 1st sem</option>
+          <option value="English course">English course</option><option value="Gen-ed group">Gen-ed group (registered)</option>
+          <option value="ageband">Age band</option><option value="Gender">Gender</option>
+        </select></div>
+      <div id="factorBars"></div>
+      <p class="note">Mean score per group within the current filter, colored by the tier it falls into; n is the group size. Small groups are noisy until more data accrues.</p>
+    </div>
+    <h2>Method</h2>
+    <div class="panel note" style="color:var(--ink)">Summarizes students entered on the intake page (passed via your browser's local storage) or a CSV you load. Filters narrow every chart above to the chosen combination. Runs entirely on your machine. Race is not part of the model; gender, department, and program are reporting dimensions with no weight.</div>
+  </div>
+
+  <div id="empty" class="panel muted">No data yet. Enter students on the <a href="index.html">intake page</a> and click <strong>Generate report</strong>, or use <strong>Load sample data</strong> to preview.</div>
+</div>
+
+<script>
+const TIERS=[{name:"Very strong",min:85,col:"#4f8a3a"},{name:"Strong",min:70,col:"#6aa03f"},{name:"Developing",min:55,col:"#c98a14"},{name:"At-risk",min:40,col:"#cc5b2e"},{name:"High support need",min:0,col:"#b03636"}];
+const OUTCOMES=["Withdraw program","Change major","Change school","Withdraw college","Graduate","Graduate honors"];
+const DIST={"Very strong":[.02,.05,.02,.01,.55,.35],"Strong":[.05,.12,.05,.03,.60,.15],"Developing":[.10,.22,.08,.08,.47,.05],"At-risk":[.18,.25,.12,.15,.28,.02],"High support need":[.28,.22,.15,.22,.12,.01]};
+const STORE="alinaction_g4_entries";
+const FILTERS=[["Department","Department"],["Program","Program"],["Gender","Gender"],["Residence","Residence"],["High school type","HS type"],["Math course","Math"],["Physics 1st sem","Physics"],["English course","English"],["Gen-ed group","Gen-ed"],["ageband","Age band"]];
+const tierFor=s=>TIERS.find(t=>s>=t.min);
+let rows=[],view=[];
+
+function parseCSV(text){const lines=text.replace(/\r/g,"").split("\n").filter(l=>l.length);const out=[];
+  for(const line of lines){const f=[];let cur="",q=false;
+    for(let i=0;i<line.length;i++){const c=line[i];
+      if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}
+      else{if(c===','){f.push(cur);cur="";}else if(c==='"')q=true;else cur+=c;}}
+    f.push(cur);out.push(f);}
+  const head=out[0].map(h=>h.trim());
+  return out.slice(1).map(r=>{const o={};head.forEach((h,i)=>o[h]=(r[i]||"").trim());return o;});}
+function ageBand(a){a=+a;if(a>=26)return"26+";if(a>=23)return"23-25";if(a>=20)return"20-22";return"17-19";}
+function num(r){return +r["Persistence score"];}
+function fieldVal(r,key){return key==="ageband"?ageBand(r["Age"]):(r[key]||"");}
+
+function ingest(data,label){
+  rows=data.filter(r=>r["Persistence score"]!==undefined&&r["Persistence score"]!==""&&!isNaN(+r["Persistence score"]));
+  rows.forEach(r=>{if(!r["Tier"])r["Tier"]=tierFor(num(r)).name;});
+  document.getElementById("src").textContent=label+" — "+rows.length+" students";
+  document.getElementById("asof").textContent="Generated "+new Date().toLocaleString()+" · "+rows.length+" students";
+  document.getElementById("empty").style.display="none";document.getElementById("report").style.display="block";
+  buildFilters();applyFilters();}
+function buildFilters(){
+  document.getElementById("filters").innerHTML=FILTERS.map(([key,lab])=>{
+    const vals=[...new Set(rows.map(r=>fieldVal(r,key)).filter(v=>v!==""))].sort();
+    return `<div><label>${lab}</label><select data-key="${key}" onchange="applyFilters()"><option value="">All</option>${vals.map(v=>`<option>${v}</option>`).join("")}</select></div>`;
+  }).join("");}
+function applyFilters(){
+  const sels=[...document.querySelectorAll('#filters select')];
+  view=rows.filter(r=>sels.every(s=>{const k=s.dataset.key,v=s.value;return !v||fieldVal(r,k)===v;}));
+  document.getElementById("showing").textContent=`Showing ${view.length} of ${rows.length} students`;
+  renderAll();}
+function resetFilters(){document.querySelectorAll('#filters select').forEach(s=>s.value="");applyFilters();}
+function fromStore(){try{const raw=localStorage.getItem(STORE);
+  if(!raw){document.getElementById("asof").textContent="No intake data found yet. Enter students on the intake page first, or load a CSV / sample.";return;}
+  ingest(JSON.parse(raw),"Intake data");}catch(e){document.getElementById("asof").textContent="Couldn't read intake data; try loading a CSV.";}}
+document.getElementById("file").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>ingest(parseCSV(rd.result),f.name);rd.readAsText(f);});
+
+function svgBars(items,maxv,fmt){return items.map(it=>{const w=maxv>0?Math.round(it.val/maxv*100):0;
+  return `<div class="bar-row"><div title="${it.label}">${it.label}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${it.col}"></div></div><div style="text-align:right">${fmt(it.val)}${it.sub?` <span class="muted">${it.sub}</span>`:''}</div></div>`;}).join("");}
+function renderAll(){if(!view.length){document.getElementById("cards").innerHTML='<div class="stat" style="grid-column:1/-1"><div class="k">No students match this combination</div></div>';["tierBars","hist","outcomeBars","factorBars","tierLegend"].forEach(i=>document.getElementById(i).innerHTML="");return;}
+  renderCards();renderTiers();renderHist();renderOutcomes();renderFactor();}
+function renderCards(){const sc=view.map(num).sort((a,b)=>a-b),n=sc.length;
+  const mean=Math.round(sc.reduce((a,b)=>a+b,0)/n),med=n%2?sc[(n-1)/2]:Math.round((sc[n/2-1]+sc[n/2])/2);
+  let grad=0;view.forEach(r=>{const d=DIST[r["Tier"]]||DIST[tierFor(num(r)).name];grad+=d[4]+d[5];});
+  const atrisk=view.filter(r=>num(r)<55).length;
+  document.getElementById("cards").innerHTML=[["Students",n,""],["Mean score",mean,"/100"],["Median",med,"/100"],["Projected to graduate",Math.round(grad/n*100)+"%",""],["Below developing",atrisk,"need support"]]
+    .map(c=>`<div class="stat"><div class="k">${c[0]}</div><div class="v">${c[1]}</div><div class="x">${c[2]}</div></div>`).join("");}
+function renderTiers(){const counts={};TIERS.forEach(t=>counts[t.name]=0);view.forEach(r=>counts[r["Tier"]]=(counts[r["Tier"]]||0)+1);
+  const n=view.length,max=Math.max(...Object.values(counts));
+  document.getElementById("tierBars").innerHTML=svgBars(TIERS.map(t=>({label:t.name,val:counts[t.name],col:t.col,sub:`(${Math.round(counts[t.name]/n*100)}%)`})),max,v=>v);
+  document.getElementById("tierLegend").innerHTML=TIERS.map(t=>`<span><span class="sw" style="background:${t.col}"></span>${t.name}</span>`).join("");}
+function renderHist(){const bins=[[0,40],[40,55],[55,70],[70,85],[85,101]],labels=["<40","40-54","55-69","70-84","85-100"],cols=["#b03636","#cc5b2e","#c98a14","#6aa03f","#4f8a3a"];
+  const c=bins.map(b=>view.filter(r=>{const s=num(r);return s>=b[0]&&s<b[1];}).length),max=Math.max(...c);
+  document.getElementById("hist").innerHTML=svgBars(labels.map((l,i)=>({label:l,val:c[i],col:cols[i],sub:""})),max,v=>v+" students");}
+function renderOutcomes(){const exp=[0,0,0,0,0,0];view.forEach(r=>{const d=DIST[r["Tier"]]||DIST[tierFor(num(r)).name];d.forEach((p,i)=>exp[i]+=p);});
+  const cols=["#b03636","#cc5b2e","#cc5b2e","#b03636","#6aa03f","#4f8a3a"];
+  document.getElementById("outcomeBars").innerHTML=svgBars(OUTCOMES.map((o,i)=>({label:o,val:exp[i],col:cols[i],sub:""})),Math.max(...exp),v=>v.toFixed(1));}
+function renderFactor(){const f=document.getElementById("factor").value,groups={};
+  view.forEach(r=>{const key=fieldVal(r,f);if(!key)return;(groups[key]=groups[key]||[]).push(num(r));});
+  const items=Object.entries(groups).map(([k,arr])=>{const avg=arr.reduce((a,b)=>a+b,0)/arr.length;return{label:k,val:Math.round(avg),col:tierFor(avg).col,sub:`n=${arr.length}`,raw:avg};}).sort((a,b)=>b.raw-a.raw);
+  document.getElementById("factorBars").innerHTML=items.length?svgBars(items,100,v=>v):'<p class="muted">No values for this factor in the current filter.</p>';}
+function downloadSummary(){if(!view.length){alert("No students in the current view.");return;}
+  const counts={};TIERS.forEach(t=>counts[t.name]=0);view.forEach(r=>counts[r["Tier"]]++);
+  const exp=[0,0,0,0,0,0];view.forEach(r=>{const d=DIST[r["Tier"]];d.forEach((p,i)=>exp[i]+=p);});
+  let out="Cohort summary (filtered view)\nStudents,"+view.length+" of "+rows.length+"\n\nTier,Count\n";TIERS.forEach(t=>out+=`${t.name},${counts[t.name]}\n`);
+  out+="\nProjected outcome,Expected students\n";OUTCOMES.forEach((o,i)=>out+=`${o},${exp[i].toFixed(1)}\n`);
+  const b=new Blob([out],{type:"text/csv"}),u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="cohort_summary_"+new Date().toISOString().slice(0,10)+".csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(u);}
+
+function loadSample(){
+  const hdr="Student ID,Age,Gender,Residence,High school type,HS GPA,Math course,Physics 1st sem,English course,Gen-ed group,Gen-ed interested in,Department,Program,Persistence score,Tier";
+  const s=[
+  "93810,19,Nonbinary or other,Commuter,Catholic,3.68,Calculus I,Physics I (Mechanics),ENG 101 - College Writing I,Communication (Written & Oral),Quantitative / Natural Science; Communication (Written & Oral),Engineering Technology,Electrical Engineering Technology - Electronics (B.S.),84,Strong",
+  "24592,18,Female,Dorm resident,Catholic,3.60,Pre-calculus,Not registered,ENG 101 - College Writing I,Humanities & Arts,Humanities & Arts,Mathematics,Mathematics - Applied (B.S.),68,Developing",
+  "13278,19,Nonbinary or other,Dorm resident,Public,3.67,Calculus I,Physics I (Mechanics),ENG 102 - College Writing II,Communication (Written & Oral),Quantitative / Natural Science,Engineering Technology,Mechanical Engineering Technology (B.S.),91,Very strong",
+  "46048,18,Male,Dorm resident,Boarding,3.37,Calculus I,Physics I (Mechanics),ENG 101 - College Writing I,Humanities & Arts,Social Sciences & DEI,Engineering Technology,Electrical Engineering Technology - Smart Grid (B.S.),85,Very strong",
+  "39256,19,Female,Dorm resident,Other,2.93,Algebra,Introduction to Physics,ESL or developmental English,Humanities & Arts,Humanities & Arts,Engineering Technology,Industrial Technology (B.S.),55,Developing",
+  "23434,21,Female,Commuter,Boarding,2.69,Algebra,Introduction to Physics,ESL or developmental English,Humanities & Arts,Communication (Written & Oral),Computer Information Systems,Computer Information Systems (B.S.),50,At-risk",
+  "98696,24,Nonbinary or other,Commuter,Public,3.79,Calculus II,Not registered,ENG 102 - College Writing II,Communication (Written & Oral),Quantitative / Natural Science,Engineering Technology,Mechanical Engineering Technology (B.S.),77,Strong",
+  "81482,19,Nonbinary or other,Commuter,Other,2.54,Algebra,Introduction to Physics,ESL or developmental English,Humanities & Arts,Humanities & Arts,Engineering Technology,Industrial Technology (B.S.),47,At-risk",
+  "38657,18,Male,Dorm resident,Other,3.88,Linear Algebra/Differential Equations,Not registered,ENG 102 - College Writing II,Social Sciences & DEI,Quantitative / Natural Science,Engineering Technology,Electrical Engineering Technology - Electronics (B.S.),87,Very strong",
+  "95181,18,Female,Commuter,Public,2.46,Pre-calculus,Not registered,ENG 101 - College Writing I,Quantitative / Natural Science,Quantitative / Natural Science,Physics,Physics (B.S.),57,Developing",
+  "36062,18,Female,Dorm resident,Public,3.89,Calculus I,Not registered,ENG 102 - College Writing II,Critical Thinking & Info Literacy,Critical Thinking & Info Literacy,Engineering Technology,Electrical Engineering Technology - Electronics (B.S.),82,Strong",
+  "64987,18,Male,Commuter,Private,2.63,Algebra,Introduction to Physics,ESL or developmental English,World Languages & Global/Historical,World Languages & Global/Historical,Engineering Technology,Industrial Technology (B.S.),49,At-risk"];
+  ingest(parseCSV(hdr+"\n"+s.join("\n")),"Sample data");}
+
+fromStore();
+</script>
+</body>
+</html>
